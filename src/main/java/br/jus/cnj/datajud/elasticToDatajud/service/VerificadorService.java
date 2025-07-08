@@ -2,7 +2,9 @@ package br.jus.cnj.datajud.elasticToDatajud.service;
 
 import br.jus.cnj.datajud.elasticToDatajud.model.Parametro;
 import br.jus.cnj.datajud.elasticToDatajud.repository.ParametroRepository;
-import br.jus.cnj.datajud.elasticToDatajud.repository.ProcessoElasticRepository;
+import br.jus.cnj.datajud.elasticToDatajud.repository.ProcessoXmlRepository;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlProcessParser;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlSearchService;
 import br.jus.cnj.datajud.elasticToDatajud.model.Tribunal;
 import br.jus.cnj.datajud.elasticToDatajud.repository.TribunalRepository;
 
@@ -35,7 +37,10 @@ public class VerificadorService {
     private ConsolidadorService consolidadorService;
     
     @Autowired
-    private ProcessoElasticRepository processoElasticRepository;
+    private ProcessoXmlRepository processoXmlRepository;
+
+    @Autowired
+    private XmlProcessParser xmlProcessParser;
     
     private long total = 0;
     
@@ -53,8 +58,8 @@ public class VerificadorService {
      */
     private void definirTribunal() {
         try {
-        	if(parametroRepository.count() == 0) {
-	        	List<JSONObject> lista = processoElasticRepository.getTribunal(0L, new Date().getTime());
+                if(parametroRepository.count() == 0) {
+                        List<JSONObject> lista = processoXmlRepository.getTribunal(0L, new Date().getTime());
 	        	for(JSONObject jo : lista) {
 	        		String tribunal = jo.getString("siglaTribunal");
 	        		Parametro p = new Parametro();
@@ -106,7 +111,7 @@ public class VerificadorService {
 	                	qtd = 1;
 	                	listaDistribuida = new ArrayList<>();
 	                	//Criar duas threads, uma delas identifica o último milisegundo e a outra é usada para carga, de forma que enquanto uma está carregando a próxima lista a outra esteja sendo convertida
-	                	Thread d = new DistribuidorSearch(processoElasticRepository, tribunal, millisProximo, limiteTemporal, limitarResultados);
+                                Thread d = new XmlSearchService(processoXmlRepository, xmlProcessParser, tribunal, millisProximo, limiteTemporal, limitarResultados);
 	                	Thread e = new DistribuidorProcess(result,consolidadorService,tribunal,millisRef,limitarResultados);
 		                d.start();
 		                e.start();
@@ -121,7 +126,7 @@ public class VerificadorService {
 		                    System.out.println("Exception " + ie.toString());
 		                }
 		                try {
-		                	DistribuidorSearch ds = (DistribuidorSearch) listaDistribuida.get(0);
+                                    XmlSearchService ds = (XmlSearchService) listaDistribuida.get(0);
 		                    if (ds.getResult() != null) {
 		                    	result = ds.getResult();
 		                    	count += result.size();
@@ -192,12 +197,11 @@ public class VerificadorService {
      */
     private void exibirTempo(String tribunal, long millis, String mensagem, int estimativaPorMinuto) {
     	try {
-	    	total = processoElasticRepository.getQuantidadeProcessosElastic(tribunal, millis, new Date().getTime());
+                total = processoXmlRepository.countProcessos(tribunal, millis, new Date().getTime());
 	    	int minutos = (int)total/estimativaPorMinuto;
 	    	int horas = minutos/60;
 	    	System.out.println("Quantidade de "+ mensagem + " a ser migrados: " + total + " - tempo estimado de migração: " + horas+ " horas e "+(minutos-(horas*60))+ " minutos");
     	}catch(Exception e) {
     		System.out.println("Quantidade de Processos não identificada");
     	}
-    }
-}
+    }}
