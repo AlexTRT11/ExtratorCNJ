@@ -1,26 +1,108 @@
-package br.jus.cnj.datajud.elasticToDatajud.repository;
+package br.jus.cnj.datajud.elasticToDatajud.service;
 
+import br.jus.cnj.datajud.elasticToDatajud.model.Parametro;
+import br.jus.cnj.datajud.elasticToDatajud.repository.ParametroRepository;
+import br.jus.cnj.datajud.elasticToDatajud.repository.ProcessoXmlRepository;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlProcessParser;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlSearchService;
+import br.jus.cnj.datajud.elasticToDatajud.model.Tribunal;
+import br.jus.cnj.datajud.elasticToDatajud.repository.TribunalRepository;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+@Service
+public class VerificadorService {
 
-import br.jus.cnj.datajud.elasticToDatajud.model.ProcessoXml;
+    @Autowired
+    private ParametroRepository parametroRepository;
 
-@Repository
-public interface ProcessoXmlRepository extends JpaRepository<ProcessoXml, Long> {
+    @Autowired
+    private TribunalRepository tribunalRepository;
 
-    @Query("select o from ProcessoXml o where o.siglaTribunal = :siglaTribunal and o.millisInsercao >= :inicio and o.millisInsercao <= :fim order by o.millisInsercao")
-    List<ProcessoXml> findBySiglaTribunalAndMillisInsercaoBetween(@Param("siglaTribunal") String siglaTribunal,
-                                                                  @Param("inicio") Long inicio,
-                                                                  @Param("fim") Long fim,
-                                                                  Pageable pageable);
+    @Autowired
+    private ConsolidadorService consolidadorService;
 
-    @Query("select count(o) from ProcessoXml o where o.siglaTribunal = :siglaTribunal and o.millisInsercao >= :inicio and o.millisInsercao <= :fim")
-    long countBySiglaTribunalAndMillisInsercaoBetween(@Param("siglaTribunal") String siglaTribunal,
-                                                      @Param("inicio") Long inicio,
-                                                      @Param("fim") Long fim);
+    @Autowired
+    private ProcessoXmlRepository processoXmlRepository;
+
+    @Autowired
+    private XmlProcessParser xmlProcessParser;
+
+    private long total = 0;
+
+    public void init() {
+        // Initialization logic...
+    }
+
+    /*
+     * Define tribunals based on available XML records.
+     */
+    private void definirTribunal() {
+        try {
+            if (parametroRepository.count() == 0) {
+                List<JSONObject> lista = processoXmlRepository.getTribunal(0L, new Date().getTime());
+                for (JSONObject jo : lista) {
+                    String tribunal = jo.getString("siglaTribunal");
+                    Parametro p = new Parametro();
+                    // ... fill Parametro fields ...
+                    parametroRepository.save(p);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao definir tribunais: " + e.getMessage());
+        }
+    }
+
+    private void executarMigracaoProcessosPorTribunal() {
+        // Example structure, adapt as needed for your actual migration logic
+        Tribunal tribunal = /* get tribunal */;
+        Long millisProximo = /* ... */;
+        Long limiteTemporal = /* ... */;
+        boolean limitarResultados = /* ... */;
+
+        int qtd = 1;
+        List<Object> listaDistribuida = new ArrayList<>();
+        try {
+            Thread d = new XmlSearchService(processoXmlRepository, xmlProcessParser, tribunal, millisProximo, limiteTemporal, limitarResultados);
+            Thread e = new DistribuidorProcess(/* result */, consolidadorService, tribunal, /* millisRef */, limitarResultados);
+            d.start();
+            e.start();
+            d.join();
+            e.join();
+
+            XmlSearchService ds = (XmlSearchService) listaDistribuida.get(0);
+            if (ds.getResult() != null) {
+                List<JSONObject> result = ds.getResult();
+                int count = result.size();
+                // ... continue migration logic ...
+            }
+        } catch (InterruptedException ie) {
+            System.out.println("Exception " + ie.toString());
+        }
+    }
+
+    private Parametro getParametro(String index) {
+        // Implement as needed
+        return null;
+    }
+
+    /*
+     * Display estimated time for migration.
+     */
+    private void exibirTempo(String tribunal, long millis, String mensagem, int estimativaPorMinuto) {
+        try {
+            total = processoXmlRepository.countProcessos(tribunal, millis, new Date().getTime());
+            int minutos = (int) total / estimativaPorMinuto;
+            int horas = minutos / 60;
+            System.out.println("Quantidade de " + mensagem + " a ser migrados: " + total +
+                " - tempo estimado de migração: " + horas + " horas e " + (minutos - (horas * 60)) + " minutos");
+        } catch (Exception e) {
+            System.out.println("Quantidade de Processos não identificada");
+        }
+    }
 }
