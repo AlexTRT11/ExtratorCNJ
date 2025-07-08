@@ -1,59 +1,108 @@
-package br.jus.cnj.datajud.elasticToDatajud.repository;
+package br.jus.cnj.datajud.elasticToDatajud.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import br.jus.cnj.datajud.elasticToDatajud.model.Parametro;
+import br.jus.cnj.datajud.elasticToDatajud.repository.ParametroRepository;
+import br.jus.cnj.datajud.elasticToDatajud.repository.ProcessoXmlRepository;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlProcessParser;
+import br.jus.cnj.datajud.elasticToDatajud.service.XmlSearchService;
+import br.jus.cnj.datajud.elasticToDatajud.model.Tribunal;
+import br.jus.cnj.datajud.elasticToDatajud.repository.TribunalRepository;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-/**
- * Repositório utilizado para acessar registros XML de processos armazenados no banco de dados.
- */
-@Component
-public class ProcessoXmlRepository {
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Service
+public class VerificadorService {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private ParametroRepository parametroRepository;
 
-    /**
-     * Recupera uma lista de XMLs do tribunal no intervalo informado.
-     *
-     * @param tribunal sigla do tribunal
-     * @param millisInsercao limite inferior do intervalo
-     * @param limite limite superior do intervalo
-     * @param limitarResultados define quantidade máxima retornada
-     * @return lista de XMLs
-     */
-    public List<String> getListProcessosXmlByTribunalMillis(String tribunal, Long millisInsercao, Long limite, boolean limitarResultados) {
-        int max = limitarResultados ? 1000 : 2000;
-        String sql = "SELECT xml FROM processo_xml WHERE sigla_tribunal = ? AND millis_insercao >= ? AND millis_insercao <= ? ORDER BY millis_insercao ASC LIMIT ?";
-        return jdbcTemplate.query(sql, new Object[] { tribunal, millisInsercao, limite, max }, (rs, rowNum) -> rs.getString("xml"));
+    @Autowired
+    private TribunalRepository tribunalRepository;
+
+    @Autowired
+    private ConsolidadorService consolidadorService;
+
+    @Autowired
+    private ProcessoXmlRepository processoXmlRepository;
+
+    @Autowired
+    private XmlProcessParser xmlProcessParser;
+
+    private long total = 0;
+
+    public void init() {
+        // Initialization logic...
     }
 
-    /**
-     * Retorna a quantidade de registros XML dentro do intervalo.
+    /*
+     * Define tribunals based on available XML records.
      */
-    public long countProcessos(String tribunal, Long millisInsercao, Long limite) {
-        String sql = "SELECT COUNT(*) FROM processo_xml WHERE sigla_tribunal = ? AND millis_insercao >= ? AND millis_insercao <= ?";
-        Long count = jdbcTemplate.queryForObject(sql, new Object[] { tribunal, millisInsercao, limite }, Long.class);
-        return count == null ? 0L : count;
-    }
-
-    /**
-     * Recupera a lista de tribunais disponíveis na tabela de XML.
-     */
-    public List<JSONObject> getTribunal(Long millisInsercao, Long limite) {
-        String sql = "SELECT DISTINCT sigla_tribunal FROM processo_xml";
-        return jdbcTemplate.query(sql, rs -> {
-            List<JSONObject> out = new ArrayList<>();
-            while (rs.next()) {
-                JSONObject o = new JSONObject();
-                o.put("siglaTribunal", rs.getString(1));
-                out.add(o);
+    private void definirTribunal() {
+        try {
+            if (parametroRepository.count() == 0) {
+                List<JSONObject> lista = processoXmlRepository.getTribunal(0L, new Date().getTime());
+                for (JSONObject jo : lista) {
+                    String tribunal = jo.getString("siglaTribunal");
+                    Parametro p = new Parametro();
+                    // ... fill Parametro fields ...
+                    parametroRepository.save(p);
+                }
             }
-            return out;
-        });
+        } catch (Exception e) {
+            System.out.println("Erro ao definir tribunais: " + e.getMessage());
+        }
+    }
+
+    private void executarMigracaoProcessosPorTribunal() {
+        // Example structure, adapt as needed for your actual migration logic
+        Tribunal tribunal = /* get tribunal */;
+        Long millisProximo = /* ... */;
+        Long limiteTemporal = /* ... */;
+        boolean limitarResultados = /* ... */;
+
+        int qtd = 1;
+        List<Object> listaDistribuida = new ArrayList<>();
+        try {
+            Thread d = new XmlSearchService(processoXmlRepository, xmlProcessParser, tribunal, millisProximo, limiteTemporal, limitarResultados);
+            Thread e = new DistribuidorProcess(/* result */, consolidadorService, tribunal, /* millisRef */, limitarResultados);
+            d.start();
+            e.start();
+            d.join();
+            e.join();
+
+            XmlSearchService ds = (XmlSearchService) listaDistribuida.get(0);
+            if (ds.getResult() != null) {
+                List<JSONObject> result = ds.getResult();
+                int count = result.size();
+                // ... continue migration logic ...
+            }
+        } catch (InterruptedException ie) {
+            System.out.println("Exception " + ie.toString());
+        }
+    }
+
+    private Parametro getParametro(String index) {
+        // Implement as needed
+        return null;
+    }
+
+    /*
+     * Display estimated time for migration.
+     */
+    private void exibirTempo(String tribunal, long millis, String mensagem, int estimativaPorMinuto) {
+        try {
+            total = processoXmlRepository.countProcessos(tribunal, millis, new Date().getTime());
+            int minutos = (int) total / estimativaPorMinuto;
+            int horas = minutos / 60;
+            System.out.println("Quantidade de " + mensagem + " a ser migrados: " + total +
+                " - tempo estimado de migração: " + horas + " horas e " + (minutos - (horas * 60)) + " minutos");
+        } catch (Exception e) {
+            System.out.println("Quantidade de Processos não identificada");
+        }
     }
 }
