@@ -1,17 +1,17 @@
-#VARI¡VEIS DE AMBIENTE
+#VARI√ÅVEIS DE AMBIENTE
 
 # Define Char set
 Sys.setlocale(locale= "Portuguese_Brazil.1252")
 
 #Pasta de trabalho 
-#EndereÁo da pasta est„o os scrips "datamart_to_bi.R", "lib_fc_datamart_to_bi.R" e "var_ambiente_datamart_to_bi.R" e onde os outputs ser„o salvos
+#Endere√ßo da pasta est√£o os scrips "datamart_to_bi.R", "lib_fc_datamart_to_bi.R" e "var_ambiente_datamart_to_bi.R" e onde os outputs ser√£o salvos
 
 pasta.trabalho<-pasta.trabalho #Definida no arquivo datamart_to_bi.R
 
 #Tribunal
 tribunal<-trib<-toupper('XXXX') #Substituir pela sigla do seu tribunal
 
-#Partes - Em quantas partes rodar o processamento (para tribunais com grande n˙mero de processos)
+#Partes - Em quantas partes rodar o processamento (para tribunais com grande n√∫mero de processos)
 partes<-1
 
 #salvar tabela fato de indicacores
@@ -25,18 +25,23 @@ salvar.assuntos<-T
 
 #Salvar arquivos em formato csv
 salvar.csvs<-T
-
-#ATEN«√O#
+db_password<- "postgres" #senha do banco criado pelo container elastictodadajud
+# Configuracao do banco que contem os XMLs em bytea
+db_hml <- "datajud_hml"     # nome do banco de onde os XMLs serao lidos
+host_db_hml <- "localhost"  # host do banco datajud_hml
+db_port_hml <- "5432"       # porta do banco datajud_hml
+db_user_hml <- "postgres"   # usuario do banco datajud_hml
+db_password_hml <- "postgres"  # senha do banco datajud_hml
 #Lag dias para calculo de indicadores
 dt.corr <- 60
 
 #Container elastictodatamart
-  # O valores atuais est„o conforme os par‚metros padr„o do arquivo "DB/.env" da aplicaÁ„o 
+  # O valores atuais est√£o conforme os par√¢metros padr√£o do arquivo "DB/.env" da aplica√ß√£o 
   # https://git.cnj.jus.br/git-jus/datajud/elastictodatamart
-  # caso tenha alterado esses valores na montagem do container, informar os par‚metros utilizados na criaÁ„o
+  # caso tenha alterado esses valores na montagem do container, informar os par√¢metros utilizados na cria√ß√£o
 
 db<- 'datajud' #nome do banco Postgres criado pelo container elastictodadajud
 host_db<- 'localhost' #host do banco criado pelo container elastictodadajud
 db_port<- '5432' #porta do banco criado pelo container elastictodadajud
-db_user<- "postgres" #usu·rio do banco criado pelo container elastictodadajud
+db_user<- "postgres" #usu√°rio do banco criado pelo container elastictodadajud
 db_password<- "postgres" #senha do banco criado pelo container elastictodadajud
