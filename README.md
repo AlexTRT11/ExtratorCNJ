@@ -6,17 +6,21 @@
 Para uso do projeto na sua totalidade é necessário os seguintes acessos:
  - Git no CNJ onde se encontra o Projeto (que inclusive você possui se estiver lendo este documento): https://git.cnj.jus.br/dpj/elastictodatamart
  - Repositório Maven do CNJ : https://nexus.cnj.jus.br/
- - Elastic-Search do CNJ : https://api.datajud.cnj.jus.br/
+- Banco PostgreSQL com os XMLs brutos do DataJud
+
+Variáveis de ambiente necessárias para a conexão aos bancos de dados:
+ - `xmlPostgresqlUrl`, `xmlPostgresqlUser`, `xmlPostgresqlPwd` referentes ao banco com os XMLs
+ - `postgresqlUrl`, `postgresqlUser`, `postgresqlPwd` referentes ao banco destino com estrutura normalizada
  
-Confecção de projeto ElasticToDatamart no Git para que os tribunais possam baixar os códigos-fonte de migração do elastic para o datamart 
-e gerar o banco de dados via docker com carregamento de dados iniciais para conseguir executar o procedimento de migração ao executar o projeto 
-(Necessário informar as variáveis de ambiente, ter o docker instalado
+Confecção de projeto ElasticToDatamart no Git para que os tribunais possam baixar os códigos-fonte de migração
+e gerar o banco de dados via docker com carregamento de dados iniciais para conseguir executar o procedimento de processamento dos XMLs
+(Necessário informar as variáveis de ambiente e ter o docker instalado)
 
 ## Nome
-Conversor de registros do Elastic-Search para o Data mart em Postgresql Datajud
+Conversor de registros em XML para o Data Mart em PostgreSQL Datajud
 
 ## Descrição
-O projeto irá permitir que seja criado um ambiente local, via docker, com toda a estrutura de banco de dados do Postgresql utilizada no Datamart, e já populada com os valores iniciais, de forma a permitir que o projeto Java em questão, seja executado e por meio dele, os registros enviados pelo tribunal ao Elastic-Search sejam convertidos e populem o banco gerado localmente.
+O projeto permite criar um ambiente local, via docker, com toda a estrutura de banco de dados do PostgreSQL utilizada no Datamart. A aplicação extrai os arquivos XML brutos, persiste seus dados de forma normalizada e em seguida calcula os indicadores para utilização em painéis de estatística.
 
 ## Instalação
 Será necessária a instalação dos seguintes softwares:
@@ -25,7 +29,7 @@ Será necessária a instalação dos seguintes softwares:
  - Maven : https://maven.apache.org/download.cgi
  
 ## Uso
-Após conseguir acesso ao Git, Maven e Elastic-Search no CNJ, e ter instalado o Docker, a JDK e o Maven na estação, o projeto deve ser baixado do Git.
+Após conseguir acesso ao Git, Maven e ao banco PostgreSQL com os XMLs do CNJ, e ter instalado o Docker, a JDK e o Maven na estação, o projeto deve ser baixado do Git.
 Após isso deve-se abrir a Console/Terminal/Shell e ir até a raiz do projeto baixado e executar os seguintes comandos:
 
 -> cd DB
@@ -38,26 +42,18 @@ Ao ser concluído, o banco de dados já estará acessível na estação. As conf
 
 Em seguida abra o projeto em sua IDE Java favorita e execute-o preenchendo as seguintes variáveis de ambiente ou preenchendo o arquivo application.properties:
 
-elasticsearchHost=api.datajud.cnj.jus.br
 
-elasticsearchPort=443
+xmlPostgresqlUrl=jdbc:postgresql://localhost:5432/datajud_xml
+xmlPostgresqlUser={usuário do banco que contém os XMLs}
+xmlPostgresqlPwd={senha de acesso ao banco de XML}
 
-elasticsearchPwd={senha de acesso ao Elastic-Search do CNJ}
-
-elasticsearchUser={usuário que tem acesso ao Elastic-Search do CNJ}
-
-{senha definida do arquivo .env}
-postgresqlPwd=postgres
-
-{DB definido no arquivo .env}
 postgresqlUrl=jdbc:postgresql://localhost:5432/datajud
-
-{usuário definido do arquivo .env}
 postgresqlUser=postgres
+postgresqlPwd=postgres
 
 millisInsercao=0 
 
-Dica: o millisInsercao igual a 0 executará todos os processos do elastic(e continuará de onde parou na última execução até que não restem mais processos), mas com um volume elevado de processos pode se tornar extremamente demorado. Desta forma se o valor for informado, o processamento seguirá a partir do tempo informado, sempre que executar}
+Dica: o millisInsercao igual a 0 executará todo o processamento desde o início (e continuará de onde parou na última execução até que não restem mais processos), mas com um volume elevado de dados pode se tornar extremamente demorado. Desta forma, se um valor for informado, o processamento seguirá a partir do tempo indicado sempre que for executado}
 
 Em seguida execute os comandos abaixo:
 
@@ -69,8 +65,7 @@ Em seguida execute os comandos abaixo:
 
 -> java -jar .\elastictodatajud-0.0.1-SNAPSHOT.jar
 
-Neste momento todos os processos do Tribunal do usuário informado no login do Elastic-Search serão carregados, em lotes de mil em mil para o datajud, sendo o tempo de conclusão proporcional a capacidade da processamento e memória da estação.
-Nossos testes indicam performance de até 120 mil processos por hora em estações com 32GB de RAM e 8 Cores.
+Durante a execução o sistema extrai os XMLs, realiza o parsing das informações, grava nas tabelas normalizadas e, por fim, calcula os indicadores. O tempo de conclusão é proporcional à capacidade de processamento da estação.
 
 ## Suporte
 A definir
@@ -88,4 +83,4 @@ CNJ e Equipe PNUD Eixo 4
 Disponibilização aos Tribunais para reprodução em seus ambientes da extração realizada no CNJ, tanto para validação dos dados quanto para identificação de problemas.
 
 ## Status do Projeto
-O projeto será atualizado conforme novas regras, indicadores e novas informações sejam definidas e disponibilizadas. Nesta prévia, o projeto está capaz de migrar do elastic para a estrutura do datamart em docker disponibilizada e pré-populada todos os processos existentes no Elastic-Seardh do CNJ, do específico tribunal.
+O projeto será atualizado conforme novas regras, indicadores e novas informações sejam definidas e disponibilizadas. Esta versão permite processar os XMLs extraídos e gerar as tabelas e indicadores do Datamart em um ambiente dockerizado.
