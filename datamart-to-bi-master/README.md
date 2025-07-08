@@ -41,6 +41,8 @@ Com o Docker ElasticToDatamart rodando e as tabelas populadas
 - Editar o caminho da pasta de trabalho no script Data.R-3/R-3
 - Editar as variáveis de ambiente conforme dados do tribunal e do docker ElasticToDatamart (https://git.cnj.jus.br/git-jus/datajud/elastictodatamart)
 - Executar o script DatamartToBi.R
+- Para extrair os XMLs do banco `datajud_hml` e calcular indicadores diretamente
+  dessa fonte, execute o script `ExtractXmlDatajud.R`
 
 Após este último passo, o script irá conectar o R ao banco Postgres do docker, calcular os indicadores e gerar as tabelas que alimentam os painéis de estatística (https://painel-estatistica.stg.cloud.cnj.jus.br/estatisticas.html) em formato .csv e .Rdata
 
@@ -59,5 +61,4 @@ CNJ e Equipe PNUD Eixo 4
 ## Licença
 Disponibilização aos Tribunais para reprodução em seus ambientes da extração realizada no CNJ, tanto para validação dos dados quanto para identificação de problemas.
 
-## Status do Projeto
-O projeto será atualizado conforme novas regras, indicadores e novas informações sejam definidas e disponibilizadas.
+## Status do ProjetoO projeto será atualizado conforme novas regras, indicadores e novas informações sejam definidas e disponibilizadas.
