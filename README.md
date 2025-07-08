@@ -67,6 +67,17 @@ Em seguida execute os comandos abaixo:
 
 Durante a execução o sistema extrai os XMLs, realiza o parsing das informações, grava nas tabelas normalizadas e, por fim, calcula os indicadores. O tempo de conclusão é proporcional à capacidade de processamento da estação.
 
+## Extração direta do datajud_hml
+
+Para calcular os indicadores a partir do banco `datajud_hml` sem utilizar o Elastic, execute:
+
+```
+java -cp target/elastictodatajud-0.0.1-SNAPSHOT.jar br.jus.cnj.datajud.hml.HmlIndicatorsApplication
+```
+
+O aplicativo utilizará as variáveis de ambiente `hmlPostgresqlUrl`, `hmlPostgresqlUser` e `hmlPostgresqlPwd` para acessar o banco, extraindo os XMLs enviados entre `01/08/2024` e `31/07/2025` e apresentando os indicadores I, III e V da Portaria CNJ 238/2024.
+
+
 ## Suporte
 A definir
 
