@@ -50,6 +50,11 @@ docker-compose up -d
 ```
 
 O Docker cria o banco datamart e popula as tabelas iniciais.
+Todos os arquivos `.sql` presentes em `DB/postgres` são montados no
+diretório `/docker-entrypoint-initdb.d` do contêiner. O script
+`init.sql` executa `structure.sql` e `data.sql`, que por sua vez criam o
+schema `datamart` e inserem dados básicos. Assim a estrutura do banco
+é criada automaticamente na primeira inicialização.
 
 3. **Defina as variáveis de ambiente**
 
