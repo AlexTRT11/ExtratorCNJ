@@ -20,6 +20,10 @@ e gerar o banco de dados via docker com carregamento de dados iniciais para cons
 Conversor de registros em XML para o Data Mart em PostgreSQL Datajud
 
 ## Descrição
+O sistema é composto por:
+- **Banco datamart**: estrutura PostgreSQL criada via docker na pasta `DB`.
+- **Módulo Java**: processa os XMLs e grava nas tabelas normalizadas.
+- **Scripts R**: opcionalmente geram arquivos para BI a partir do banco local.
 O projeto permite criar um ambiente local, via docker, com toda a estrutura de banco de dados do PostgreSQL utilizada no Datamart. A aplicação extrai os arquivos XML brutos, persiste seus dados de forma normalizada e em seguida calcula os indicadores para utilização em painéis de estatística.
 
 ## Instalação
@@ -29,18 +33,27 @@ Será necessária a instalação dos seguintes softwares:
  - Maven : https://maven.apache.org/download.cgi
  
 ## Uso
-Após conseguir acesso ao Git, Maven e ao banco PostgreSQL com os XMLs do CNJ, e ter instalado o Docker, a JDK e o Maven na estação, o projeto deve ser baixado do Git.
-Após isso deve-se abrir a Console/Terminal/Shell e ir até a raiz do projeto baixado e executar os seguintes comandos:
+Siga os passos abaixo para executar o projeto em sua estação:
 
--> cd DB
+1. **Clone o repositório**
 
--> docker-compose up -d
+```bash
+git clone https://github.com/cnj-projects/ElasticToDatamart.git
+cd ElasticToDatamart
+```
 
-Após este último comando, o Docker irá montar a imagem do banco de dados, e popular com todos os registros necessários para o uso do projeto. Este procedimento demora em torno de 10 minutos.
+2. **Suba o banco local**
 
-Ao ser concluído, o banco de dados já estará acessível na estação. As configurações de acesso ao banco de dados estão localizadas no arquivo .env dentro da pasta DB do projeto e podem ser alteradas antes de executar o docker-compose.
+```bash
+cd DB
+docker-compose up -d
+```
 
-Em seguida abra o projeto em sua IDE Java favorita e execute-o preenchendo as seguintes variáveis de ambiente ou preenchendo o arquivo application.properties:
+O Docker cria o banco datamart e popula as tabelas iniciais.
+
+3. **Defina as variáveis de ambiente**
+
+Configure as variáveis abaixo (via `export` ou editando `src/main/resources/application.properties`):
 
 
 xmlPostgresqlUrl=jdbc:postgresql://localhost:5432/datajud_xml
@@ -50,6 +63,9 @@ xmlPostgresqlPwd={senha de acesso ao banco de XML}
 postgresqlUrl=jdbc:postgresql://localhost:5432/datajud
 postgresqlUser=postgres
 postgresqlPwd=postgres
+hmlPostgresqlUrl=jdbc:postgresql://10.11.1.88:5432/datajud_hml
+hmlPostgresqlUser=datajud_user
+hmlPostgresqlPwd=datajud
 
 millisInsercao=0 
 
@@ -64,6 +80,7 @@ Em seguida execute os comandos abaixo:
 -> cd target
 
 -> java -jar .\elastictodatajud-0.0.1-SNAPSHOT.jar
+# o resultado dos indicadores é impresso no console
 
 Durante a execução o sistema extrai os XMLs, realiza o parsing das informações, grava nas tabelas normalizadas e, por fim, calcula os indicadores. O tempo de conclusão é proporcional à capacidade de processamento da estação.
 

@@ -13,9 +13,9 @@ import java.util.List;
 public class HmlIndicatorsApplication {
 
     public static void main(String[] args) throws SQLException {
-        String url = System.getenv().getOrDefault("hmlPostgresqlUrl", "jdbc:postgresql://localhost:5432/datajud_hml");
-        String user = System.getenv().getOrDefault("hmlPostgresqlUser", "postgres");
-        String pwd = System.getenv().getOrDefault("hmlPostgresqlPwd", "postgres");
+        String url = System.getenv().getOrDefault("hmlPostgresqlUrl", "jdbc:postgresql://10.11.1.88:5432/datajud_hml");
+        String user = System.getenv().getOrDefault("hmlPostgresqlUser", "datajud_user");
+        String pwd = System.getenv().getOrDefault("hmlPostgresqlPwd", "datajud");
 
         HmlXmlExtractor extractor = new HmlXmlExtractor(url, user, pwd);
         LocalDateTime ini = LocalDateTime.of(2024, 8, 1, 0, 0);
